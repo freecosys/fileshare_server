@@ -1,9 +1,16 @@
+import json
+import os
 import uuid
 
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, render_template
 
 app = Flask(__name__)
 chunk_size = 4096
+
+
+@app.route('/')
+def hello():
+	return render_template('index.html')
 
 
 @app.after_request
@@ -16,10 +23,10 @@ def add_header(response):
 
 @app.route('/upload/<username>', methods=['GET', 'PUT'])
 def hello_world(username):
-	if request.headers.get("Token") == "NaSExpEJc22vyWNNe9Ja":
+	if request.headers.get("Token", "test") == os.getenv('INVITE'):
 		filename = str(uuid.uuid1())
-		oof = open(filename+".data", "wb")
-		ooff = open(filename+".info", "w")
+		oof = open(filename + ".data", "wb")
+		ooff = open(filename + ".info", "w")
 		while True:
 			chunk = request.stream.read(chunk_size)
 			oof.write(chunk)
@@ -33,13 +40,13 @@ def hello_world(username):
 		return "error", 500
 
 
-@app.route('/pub/<id>')
-def download_file(url_uuid):
-	ooff = open(url_uuid+".info", "r")
+@app.route('/pub/<uuid>')
+def downloadFile(uuid):
+	ooff = open(uuid + ".info", "r")
 	fn = ooff.read()
 	ooff.close()
-	return send_file(url_uuid+".data", download_name=fn, as_attachment=True)
+	return send_file(uuid + ".data", download_name=fn, as_attachment=True)
 
 
 if __name__ == '__main__':
-	app.run()
+	app.run(host="0.0.0.0")
